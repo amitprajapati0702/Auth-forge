@@ -20,7 +20,12 @@ api.interceptors.response.use(
         const isAuthEndpoint =
             originalRequest?.url?.includes("/auth/login") ||
             originalRequest?.url?.includes("/auth/refresh") ||
-            originalRequest?.url?.includes("/auth/register");
+            originalRequest?.url?.includes("/auth/register") ||
+            originalRequest?.url?.includes("/auth/logout") ||
+            originalRequest?.url?.includes("/users/me") ||
+            originalRequest?.url?.includes("/profile") ||
+            originalRequest?.url?.includes("/change-password") ||
+            originalRequest?.url?.includes("/reset-password");
 
         if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
             originalRequest._retry = true;

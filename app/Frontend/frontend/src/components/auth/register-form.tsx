@@ -32,7 +32,7 @@ export default function RegisterForm() {
       email: "",
       password: "",
     },
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const registerMutation = useRegister();
