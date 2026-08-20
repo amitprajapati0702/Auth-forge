@@ -1,7 +1,11 @@
 import { pgTable, boolean, timestamp, varchar,pgEnum } from "drizzle-orm/pg-core";
 
 
-export const roleEnum =pgEnum("role", ["USER","ADMIN","SUPER_ADMIN",]);
+export const roleEnum =pgEnum("role", ["USER","ADMIN"]);
+export const UserStatus = {
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+} as const;
 
 
 export const users = pgTable("users", {
@@ -17,6 +21,7 @@ export const users = pgTable("users", {
     }).notNull(),
     isEmailVerified: boolean("is_email_verified").default(false).notNull(),
     role: roleEnum("role").notNull().default("USER"),
+    status:varchar("status",{length:10}).default(UserStatus.ACTIVE).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 

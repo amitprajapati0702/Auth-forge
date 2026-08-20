@@ -1,33 +1,34 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 import ApiError from "../utils/ApiError.js";
+import httpStatus from "../utils/http-status.js";
 import { ErrorCodes } from "../utils/error-codes.js";
 
-
-export async function authorize(...allowedroles: string[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
-        const role = req.user?.role
+export function authorize(...allowedRoles: string[]): RequestHandler {
+    return (req: Request, _res: Response, next: NextFunction) => {
+        const role = req.user?.role;
 
         if (!role) {
             return next(
                 new ApiError({
-                    statuscode: 401,
-                    message: "Unauthorized",
+                    statuscode: httpStatus.UNAUTHORIZED,
+                    message: "Authentication required",
                     errorcode: ErrorCodes.AUTHORIZATION_ERROR,
                 })
-            )
+            );
         }
 
-        if (!allowedroles.includes(role)) {
+        if (!allowedRoles.includes(role)) {
             return next(
                 new ApiError({
-                    statuscode: 403,
-                    message: "Insufficient Permissions",
+                    statuscode: httpStatus.FORBIDDEN,
+                    message: "Insufficient permissions",
                     errorcode: ErrorCodes.AUTHORIZATION_ERROR,
                 })
-            )
+            );
         }
 
-        next()
-    }
-
+        next();
+    };
 }
+
+export default authorize;

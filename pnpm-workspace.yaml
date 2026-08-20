@@ -1,6 +1,16 @@
 packages:
   - "app/*"
+  - "app/Frontend/*"
   - "packages/*"
+
+onlyBuiltDependencies:
+  - bcrypt
+  - esbuild
+  - sharp
+  - unrs-resolver
+
 allowBuilds:
   bcrypt: true
   esbuild: true
+  sharp: true
+  unrs-resolver: true

@@ -1,6 +1,6 @@
 import { pinoHttp } from 'pino-http';
 
-import logger from '../config/logger.js';
+import logger from "../config/logger.js";
 import {REDACT_PATHS} from "../utils/log-redaction.js"
 
 export const requestLoggerMiddleware = pinoHttp({

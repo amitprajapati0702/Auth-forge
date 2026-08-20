@@ -3,12 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MAIN_NAV_ITEMS } from "@/constants/navigation";
-import { ShieldCheck, Sparkles, ExternalLink } from "lucide-react";
+import { ShieldCheck, Sparkles, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+
+  const navItems = MAIN_NAV_ITEMS.filter((item) => {
+    if (item.roleRequired === "ADMIN" && user?.role !== "ADMIN") {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 min-h-screen select-none shrink-0 transition-all">
@@ -38,7 +45,7 @@ export function Sidebar() {
           Main Menu
         </div>
 
-        {MAIN_NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
@@ -68,7 +75,9 @@ export function Sidebar() {
               {item.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold ${
-                    isActive
+                    item.roleRequired === "ADMIN"
+                      ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                      : isActive
                       ? "bg-neutral-800 text-neutral-200 dark:bg-neutral-200 dark:text-neutral-800"
                       : "bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                   }`}
@@ -98,7 +107,6 @@ export function Sidebar() {
             className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white inline-flex items-center gap-1 hover:underline"
           >
             Review Security Settings
-            <ExternalLink className="w-2.5 h-2.5" />
           </Link>
         </div>
       </div>

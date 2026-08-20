@@ -51,6 +51,7 @@ export function ResetPasswordForm() {
     mode: "onChange",
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const passwordValue = watch("newPassword") || "";
   const hasMinLength = passwordValue.length >= 8;
   const hasUpperCase = /[A-Z]/.test(passwordValue);

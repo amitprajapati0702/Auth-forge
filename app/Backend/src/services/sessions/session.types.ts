@@ -11,3 +11,5 @@ export interface SessionData {
 
   ipAddress?: string;
 }
+
+export type CreateSessionData = Partial<Omit<SessionData, "userId">>;

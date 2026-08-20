@@ -6,6 +6,8 @@ import {
   Mail,
   Smartphone,
   Layers,
+  Users,
+  Shield,
   LucideIcon,
 } from "lucide-react";
 
@@ -15,6 +17,7 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: string;
   description?: string;
+  roleRequired?: "ADMIN";
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
@@ -35,6 +38,14 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     href: "/settings",
     icon: Settings,
     description: "Security and account preferences",
+  },
+  {
+    title: "User Management",
+    href: "/admin",
+    icon: Users,
+    description: "Manage users, roles and permissions",
+    badge: "Admin",
+    roleRequired: "ADMIN",
   },
 ];
 

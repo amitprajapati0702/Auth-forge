@@ -11,7 +11,6 @@ export const authenticate: RequestHandler = asyncHandler(
     async (req: Request, _res: Response, next: NextFunction) => {
         const token =
             req.cookies?.[AUTH_CONSTANTS.COOKIES.ACCESS_TOKEN] ||
-            req.cookies?.accessToken ||
             req.headers.authorization?.replace(/^Bearer\s+/i, "");
 
         if (!token) {

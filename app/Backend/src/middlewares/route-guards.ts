@@ -1,5 +1,4 @@
+import type { RequestHandler } from "express";
 import { authorize } from "./authorize.middleware.js";
 
-export const AdminGuard = authorize("ADMIN","SUPER_ADMIN")
-
-export const superADMINGuard = authorize("SUPER_ADMIN")
+export const AdminGuard: RequestHandler = authorize("ADMIN", "SUPER_ADMIN");

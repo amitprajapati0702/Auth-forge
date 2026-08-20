@@ -12,6 +12,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  ShieldAlert,
 } from "lucide-react";
 
 export function UserDropdown() {
@@ -127,6 +128,22 @@ export function UserDropdown() {
 
           {/* Navigation Links */}
           <div className="py-1">
+            {user?.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between px-4 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-indigo-500" />
+                  <span>Admin Console</span>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                  ADMIN
+                </span>
+              </Link>
+            )}
+
             <Link
               href="/profile"
               onClick={() => setIsOpen(false)}

@@ -11,10 +11,7 @@ class LoginSecurityService {
     const attempts = await redis.incr(key);
 
     if (attempts === 1) {
-      await redis.expire(
-        key,
-        AUTH_CONSTANTS.LOGIN_SECURITY.LOCK_DURATION_SECONDS
-      );
+      await redis.expireAt(key, AUTH_CONSTANTS.LOGIN_SECURITY.LOCK_DURATION_SECONDS);
     }
 
     return attempts;

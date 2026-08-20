@@ -8,10 +8,10 @@ type AsyncController = (
 ) => Promise<unknown>;
 
 
-export function asyncHandler(handler:AsyncController):RequestHandler{
-        return(req,res,next) => {
-            Promise.resolve(handler(req,res,next).catch(next))
-        }
+export const asyncHandler = (handler:AsyncController):RequestHandler=> {
+    return(req,res,next) => {
+        Promise.resolve(handler(req,res,next)).catch(next)
+    }
 }
 
 export default asyncHandler

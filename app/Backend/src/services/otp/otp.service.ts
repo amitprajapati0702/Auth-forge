@@ -17,7 +17,7 @@ class OtpService {
         return createHash('sha256').update(otp).digest('hex')
     }
 
-    
+
 
 
     generate(): string {
@@ -31,12 +31,12 @@ class OtpService {
         const key = this.getOtpKey(email);
         const otpHash = this.hashOtp(otp);
 
-        await redis.set(key, JSON.stringify({
+        await redis.hSet(key, {
             hash: otpHash,
-            attempts: 0,
-        }), {
-            EX: AUTH_CONSTANTS.OTP.EXPIRES_IN_SECONDS,
+            attempts: "0"
         })
+
+        await redis.expire(key, AUTH_CONSTANTS.OTP.EXPIRES_IN_SECONDS);
 
 
 
@@ -44,24 +44,41 @@ class OtpService {
 
     async verify(email: string, otp: string): Promise<OtpVerificationResult> {
         const key = this.getOtpKey(email)
-        const raw = await redis.get(key);
+        const exists = await redis.exists(key)
 
-        if (!raw) {
+        if (!exists) {
             return {
                 verified: false,
-                attemptsRemaining: 0,
+                attemptsRemaining: 0
+            }
+        }
+
+        const data = await redis.hGetAll(key)
+
+        const storehash = data.hash;
+        const attempts = Number(data.attempts ?? 0)
+
+        const submittedHash = this.hashOtp(otp);
+
+        if (submittedHash === storehash) {
+            await redis.del(key);
+
+            return {
+                verified: true,
+                attemptsRemaining:
+                    AUTH_CONSTANTS.OTP.MAX_ATTEMPTS -
+                    attempts,
             };
         }
 
-        const data = JSON.parse(raw) as {
-            hash: string;
-            attempts: number;
-        }
-
-        const currentAttempts = data.attempts + 1
+        const currentAttempts = await redis.hIncrBy(
+            key,
+            "attempts",
+            1,
+        );
 
         if (
-            currentAttempts >
+            currentAttempts >=
             AUTH_CONSTANTS.OTP.MAX_ATTEMPTS
         ) {
             await redis.del(key);
@@ -72,42 +89,15 @@ class OtpService {
             };
         }
 
-        const submittedHash = this.hashOtp(otp);
-
-        const isValid =
-            submittedHash === data.hash;
-
-        if (!isValid) {
-            const ttl = await redis.ttl(key);
-
-            await redis.set(
-                key,
-                JSON.stringify({
-                    hash: data.hash,
-                    attempts: currentAttempts,
-                }),
-                {
-                    EX: ttl > 0 ? ttl : AUTH_CONSTANTS.OTP.EXPIRES_IN_SECONDS,
-                },
-            );
-
-            return {
-                verified: false,
-                attemptsRemaining:
-                    AUTH_CONSTANTS.OTP.MAX_ATTEMPTS -
-                    currentAttempts,
-            };
-        }
-
-        await redis.del(key);
-
         return {
-            verified: true,
+            verified: false,
             attemptsRemaining:
                 AUTH_CONSTANTS.OTP.MAX_ATTEMPTS -
                 currentAttempts,
         };
+
     }
+
 }
 
 

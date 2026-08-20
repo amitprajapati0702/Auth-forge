@@ -15,7 +15,7 @@ const envschema = z.object({
     EMAIL_USER: z.string(),
     EMAIL_PASS: z.string(),
     EMAIL_FROM: z.string(),
-    FRONTEND_URL: z.url(),
+    FRONTEND_URL: z.string(),
 
 
 

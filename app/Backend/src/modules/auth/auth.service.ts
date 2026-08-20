@@ -103,6 +103,7 @@ class AuthService {
             passwordHash: pending.passwordHash,
             fullName: pending.fullname,
             isEmailVerified: true,
+            
         });
 
         // Clean up pending registration
@@ -193,6 +194,14 @@ class AuthService {
         }
         await loginSecurityService.clearAttempts(data.email);
 
+
+        if (user.status === "SUSPENDED") {
+            throw new ApiError({
+                statuscode: httpStatus.FORBIDDEN,
+                message: "Your account has been suspended. Please contact support.",
+                errorcode: ErrorCodes.AUTHORIZATION_ERROR,
+            });
+        }
 
         if (!user.isEmailVerified) {
             throw new ApiError({
@@ -321,6 +330,7 @@ class AuthService {
             fullName: user.fullName,
             email: user.email,
             role: user.role,
+            status: user.status,
             isEmailVerified: user.isEmailVerified,
         };
     }

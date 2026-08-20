@@ -6,5 +6,4 @@ export * from "./auth.validation.js";
 
 export * from "./auth.controller.js";
 
-export { default as authRoutes }
-  from "./auth.route.js";
+export { default as authRoutes } from "./auth.route.js";

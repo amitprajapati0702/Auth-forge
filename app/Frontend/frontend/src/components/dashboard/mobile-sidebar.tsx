@@ -18,6 +18,14 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user } = useAuth();
   const logoutMutation = useLogout();
 
+  // Filter items by role
+  const navItems = MAIN_NAV_ITEMS.filter((item) => {
+    if (item.roleRequired === "ADMIN" && user?.role !== "ADMIN") {
+      return false;
+    }
+    return true;
+  });
+
   // Close when pathname changes
   useEffect(() => {
     onClose();
@@ -77,7 +85,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             Navigation
           </div>
 
-          {MAIN_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/dashboard" && pathname.startsWith(item.href));
@@ -99,7 +107,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <span>{item.title}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-neutral-200 dark:bg-neutral-800">
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold ${
+                      item.roleRequired === "ADMIN"
+                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                        : "bg-neutral-200 dark:bg-neutral-800"
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}
@@ -118,26 +132,23 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                 {user?.fullName || "User Account"}
               </p>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
-                {user?.email || "user@example.com"}
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400 capitalize">
+                {user?.role || "standard user"}
               </p>
             </div>
           </div>
 
           <button
-            onClick={async () => {
-              await logoutMutation.mutateAsync();
-              onClose();
-            }}
+            onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 transition-colors"
           >
             {logoutMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <LogOut className="w-4 h-4" />
             )}
-            <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
+            Sign Out
           </button>
         </div>
       </div>
