@@ -82,7 +82,7 @@ export function useDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       const message = error.response?.data?.message || "Failed to delete user";
       toast.error(message);
     },
