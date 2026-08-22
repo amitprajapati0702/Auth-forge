@@ -18,9 +18,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   Search,
-  Filter,
+ 
   RefreshCw,
-  MoreVertical,
   CheckCircle2,
   AlertTriangle,
   UserX,
@@ -28,15 +27,12 @@ import {
   Trash2,
   Activity,
   History,
-  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   X,
   Clock,
-  Laptop,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader,  CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";

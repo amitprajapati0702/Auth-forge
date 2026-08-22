@@ -5,8 +5,8 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: UserRole | string;
-  status?: UserStatus | string;
+  role: UserRole;
+  status?: UserStatus;
   isEmailVerified: boolean;
   createdAt?: string;
   updatedAt?: string;

@@ -10,7 +10,7 @@ export function requireOwnership(paramname = "id"){
             return next(
                 new ApiError({
                     statuscode:httpStatus.FORBIDDEN,
-                    message:"Forbidden",
+                    message:"You can only update your own profile",
                     errorcode:ErrorCodes.AUTHORIZATION_ERROR,
                 })
             )

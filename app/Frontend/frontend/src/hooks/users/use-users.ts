@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getUsers, 
@@ -41,8 +42,10 @@ export function useUpdateUserRole() {
       queryClient.invalidateQueries({ queryKey: ["admin-user", updatedUser.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to update user role";
+    onError: (error: unknown) => {
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to update user role")
+        : "Failed to update user role";
       toast.error(message);
     },
   });
@@ -65,8 +68,10 @@ export function useUpdateUserStatus() {
       queryClient.invalidateQueries({ queryKey: ["admin-user", updatedUser.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || "Failed to update user status";
+    onError: (error: unknown) => {
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to update user status")
+        : "Failed to update user status";
       toast.error(message);
     },
   });
@@ -83,7 +88,9 @@ export function useDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
     },
     onError: (error: unknown) => {
-      const message = error.response?.data?.message || "Failed to delete user";
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to delete user")
+        : "Failed to delete user";
       toast.error(message);
     },
   });

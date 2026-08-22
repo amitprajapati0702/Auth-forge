@@ -71,8 +71,8 @@ export const loginSchema = z.object({
         .min(1, "Password is required"),
 });
 
-export const loginschema = loginSchema;
 export type LoginInput = z.infer<typeof loginSchema>;
+
 
 export const forgotPasswordSchema = z.object({
   email: z

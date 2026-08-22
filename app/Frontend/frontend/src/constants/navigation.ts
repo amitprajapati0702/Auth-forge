@@ -7,7 +7,6 @@ import {
   Smartphone,
   Layers,
   Users,
-  Shield,
   LucideIcon,
 } from "lucide-react";
 
@@ -18,6 +17,15 @@ export interface NavItem {
   badge?: string;
   description?: string;
   roleRequired?: "ADMIN";
+}
+
+/** Settings section nav items use `id` as a page-section anchor instead of `href`. */
+export interface SettingsNavItem {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  description: string;
+  badge?: string;
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
@@ -49,7 +57,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export const SETTINGS_NAV_ITEMS = [
+export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
   {
     id: "account",
     title: "Account Overview",
@@ -82,6 +90,3 @@ export const SETTINGS_NAV_ITEMS = [
     badge: "Recommended",
   },
 ];
-
-// Alias export for backward compatibility
-export const NAV_ITEMS = MAIN_NAV_ITEMS;

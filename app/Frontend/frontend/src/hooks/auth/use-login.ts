@@ -9,5 +9,4 @@ export function useLogin() {
     mutationFn: (data: LoginInput) => loginuser(data),
   });
 }
-
-export const userlogin = useLogin;
+

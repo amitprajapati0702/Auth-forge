@@ -1,3 +1,11 @@
+
+// Extend Axios config to support the _retry flag used in the refresh interceptor
+declare module "axios" {
+  interface InternalAxiosRequestConfig {
+    _retry?: boolean;
+  }
+}
+
 import { api } from "./client";
 import type {
   LoginInput,
@@ -42,8 +50,8 @@ export const getCurrentUser = async () => {
   return res.data.data;
 };
 
-export const logoutuser = async () => {
-  return await api.post("/auth/logout");
+export const logoutuser = async (): Promise<void> => {
+  await api.post("/auth/logout");
 };
 
 export const refreshSession = async () => {

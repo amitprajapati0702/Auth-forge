@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./auth-provider";
 
-export function QueryProvider({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -14,6 +14,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             staleTime: 1000 * 60, // 1 minute
             retry: 1,
             refetchOnWindowFocus: false,
+            gcTime: 5 * 60 * 1000, //5minutes
           },
         },
       })
@@ -29,4 +30,4 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const Providers = QueryProvider;
+
