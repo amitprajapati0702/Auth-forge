@@ -69,6 +69,7 @@ class UserService {
             user.passwordHash
         );
 
+
         if (!isCurrentPasswordValid) {
             throw new ApiError({
                 statuscode: httpStatus.UNAUTHORIZED,

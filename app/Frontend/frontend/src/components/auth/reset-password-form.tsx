@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -25,6 +24,7 @@ import { useResetPassword } from "@/hooks/auth/use-reset-password";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -39,7 +39,6 @@ export function ResetPasswordForm() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -50,13 +49,6 @@ export function ResetPasswordForm() {
     },
     mode: "onChange",
   });
-
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const passwordValue = watch("newPassword") || "";
-  const hasMinLength = passwordValue.length >= 8;
-  const hasUpperCase = /[A-Z]/.test(passwordValue);
-  const hasLowerCase = /[a-z]/.test(passwordValue);
-  const hasNumber = /[0-9]/.test(passwordValue);
 
   const resetPasswordMutation = useResetPassword();
   const isLoading = resetPasswordMutation.isPending;
@@ -235,28 +227,6 @@ export function ResetPasswordForm() {
             {errors.confirmPassword.message}
           </p>
         )}
-      </div>
-
-      {/* Requirements checklist */}
-      <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1.5 text-[11px]">
-        <div className="font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          Password Requirements
-        </div>
-        <div className="grid grid-cols-2 gap-1 text-[10px] text-neutral-500 dark:text-neutral-400">
-          <span className={hasMinLength ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""}>
-            • 8+ characters
-          </span>
-          <span className={hasUpperCase ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""}>
-            • Uppercase letter
-          </span>
-          <span className={hasLowerCase ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""}>
-            • Lowercase letter
-          </span>
-          <span className={hasNumber ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""}>
-            • Number (0-9)
-          </span>
-        </div>
       </div>
 
       <Button

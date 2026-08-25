@@ -7,7 +7,7 @@ export async function checkDatabaseHealth(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    logger.error(error, 'PostgreSQL health check failed.');
+    logger.error(error, "PostgreSQL health check failed.");
     return false;
   }
 }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
-import { AdminGuard } from "../../middlewares/route-guards.js";
+import { AdminGuard } from "../../middlewares/role-guards.js";
+
 import { validate } from "../../middlewares/validate.middleware.js";
 import { 
     updateProfile, 

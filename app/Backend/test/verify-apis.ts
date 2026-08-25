@@ -67,7 +67,8 @@ async function runTests() {
             newPassword,
         });
         const userInDb = await authRepository.findById(testUserId);
-        const isNewPasswordValid = await passwordService.compare(newPassword, userInDb!.passwordHash);
+        const isNewPasswordValid = await passwordService.compare(newPassword, userInDb!.passwordHash!);
+
         if (!isNewPasswordValid) {
             throw new Error("Password change failed to update database hash");
         }

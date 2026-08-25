@@ -6,6 +6,8 @@ import {env} from "./config/env.js"
 import logger from './config/logger.js';
 import { connectRedis,disconnectRedis, checkRedisHealth } from './infrastructure/redis/index.js';
 import { connectDatabase,disconnectDatabase,checkDatabaseHealth } from './infrastructure/database/index.js';
+import { startEmailWorker } from './workers/email.worker.js';
+import type { Worker } from 'bullmq';
 
 async function bootstrap(): Promise<void> {
   try {
@@ -27,6 +29,9 @@ async function bootstrap(): Promise<void> {
       throw new Error('Redis health check failed.');
     }
 
+    // Start background workers
+    const emailWorker = startEmailWorker();
+
     const server = http.createServer(app);
 
     server.listen(env.PORT, () => {
@@ -34,7 +39,7 @@ async function bootstrap(): Promise<void> {
       logger.info(`Environment: ${env.NODE_ENV}`);
     });
 
-    registerShutdown(server);
+    registerShutdown(server, emailWorker);
   } catch (error) {
     logger.fatal(error, 'Application startup failed.');
 
@@ -42,12 +47,14 @@ async function bootstrap(): Promise<void> {
   }
 }
 
-function registerShutdown(server: http.Server): void {
+function registerShutdown(server: http.Server, emailWorker: Worker): void {
   const shutdown = async (signal: string) => {
     logger.warn(`${signal} received. Shutting down...`);
 
     server.close(async () => {
       try {
+        await emailWorker.close();
+
         await disconnectRedis();
 
         await disconnectDatabase();

@@ -12,6 +12,21 @@ export interface User {
   updatedAt?: string;
 }
 
+export interface Session {
+  sessionId: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  lastActivityAt: string;
+  isCurrent: boolean;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message?: string;
+  user?: User;
+}
+
 export interface PaginationMeta {
   total: number;
   page: number;

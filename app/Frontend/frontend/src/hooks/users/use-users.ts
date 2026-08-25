@@ -102,3 +102,38 @@ export function useAuditLogs() {
     queryFn: getAuditLogs,
   });
 }
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string }) =>
+      import("@/lib/api/users-api").then((m) => m.changePassword(data)),
+    onSuccess: () => {
+      toast.success("Password changed successfully");
+    },
+    onError: (error: unknown) => {
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to change password")
+        : "Failed to change password";
+      toast.error(message);
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { fullName?: string; email?: string }) =>
+      import("@/lib/api/users-api").then((m) => m.updateProfile(data)),
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: (error: unknown) => {
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.message ?? "Failed to update profile")
+        : "Failed to update profile";
+      toast.error(message);
+    },
+  });
+}
+

@@ -5,50 +5,66 @@ import { useAuth } from "@/components/providers/auth-provider";
 import {
   User,
   KeyRound,
-  Mail,
   Layers,
-  Smartphone,
-  CheckCircle2,
-  AlertTriangle,
   Laptop,
+  Smartphone as MobileIcon,
   Globe,
   Trash2,
-  QrCode,
   Lock,
   Eye,
   EyeOff,
   Save,
+  Loader2,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useSessions, useDeleteSession, useLogoutAllSessions } from "@/hooks/sessions/use-sessions";
+import { useChangePassword, useUpdateProfile } from "@/hooks/users/use-users";
 import { toast } from "sonner";
 
-type SettingsTab = "account" | "password" | "email" | "sessions" | "2fa";
+type SettingsTab = "account" | "password" | "sessions";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
 
-  // Form states
+  // Account tab state
+  const [fullName, setFullName] = useState(user?.fullName || "");
+  const updateProfileMutation = useUpdateProfile();
+
+  // Password tab state
   const [showPassword, setShowPassword] = useState(false);
   const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [newEmail, setNewEmail] = useState("");
-  const [fullName, setFullName] = useState(user?.fullName || "");
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const changePasswordMutation = useChangePassword();
 
-  const handleSaveGeneral = (e: React.FormEvent) => {
+  // Sessions state & hooks
+  const { data: sessions, isLoading: isLoadingSessions, refetch: refetchSessions } = useSessions();
+  const deleteSessionMutation = useDeleteSession();
+  const logoutAllMutation = useLogoutAllSessions();
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
+  const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Account preferences updated successfully");
+    if (!fullName.trim()) {
+      toast.error("Full name cannot be empty");
+      return;
+    }
+    await updateProfileMutation.mutateAsync({ fullName: fullName.trim() });
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwords.currentPassword || !passwords.newPassword) {
       toast.error("Please fill in all password fields");
@@ -58,35 +74,68 @@ export default function SettingsPage() {
       toast.error("New passwords do not match");
       return;
     }
-    if (passwords.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (passwords.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
-    toast.success("Password change request submitted successfully");
-    setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  };
 
-  const handleUpdateEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEmail || !newEmail.includes("@")) {
-      toast.error("Please enter a valid email address");
-      return;
+    try {
+      await changePasswordMutation.mutateAsync({
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+      });
+      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch {
+      // Error handled by hook toast
     }
-    toast.success(`Verification link sent to ${newEmail}`);
-    setNewEmail("");
   };
 
-  const handleRevokeOtherSessions = () => {
-    toast.success("All other active sessions have been terminated");
-  };
-
-  const handleToggle2FA = () => {
-    setTwoFactorEnabled((prev) => !prev);
-    if (!twoFactorEnabled) {
-      toast.success("Two-factor authentication setup initialized");
-    } else {
-      toast.info("Two-factor authentication disabled");
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      await deleteSessionMutation.mutateAsync(sessionId);
+      toast.success("Session terminated");
+      setRevokingSessionId(null);
+    } catch {
+      toast.error("Failed to revoke session");
     }
+  };
+
+  const handleRevokeAllOtherSessions = async () => {
+    try {
+      await logoutAllMutation.mutateAsync();
+      toast.success("All other active sessions have been terminated");
+      setShowRevokeAllDialog(false);
+      refetchSessions();
+    } catch {
+      toast.error("Failed to revoke sessions");
+    }
+  };
+
+  const getDeviceIcon = (ua?: string) => {
+    if (!ua) return Globe;
+    const lower = ua.toLowerCase();
+    if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) {
+      return MobileIcon;
+    }
+    return Laptop;
+  };
+
+  const formatUserAgent = (ua?: string) => {
+    if (!ua) return "Unknown Browser / Client";
+    if (ua.includes("Chrome") && !ua.includes("Edg")) return "Chrome on " + getOS(ua);
+    if (ua.includes("Firefox")) return "Firefox on " + getOS(ua);
+    if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari on " + getOS(ua);
+    if (ua.includes("Edg")) return "Edge on " + getOS(ua);
+    return "Browser on " + getOS(ua);
+  };
+
+  const getOS = (ua: string) => {
+    if (ua.includes("Windows")) return "Windows";
+    if (ua.includes("Mac OS") || ua.includes("Macintosh")) return "macOS";
+    if (ua.includes("Linux")) return "Linux";
+    if (ua.includes("Android")) return "Android";
+    if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
+    return "Device";
   };
 
   const navItems: { id: SettingsTab; title: string; icon: LucideIcon; description: string; badge?: string }[] = [
@@ -100,26 +149,14 @@ export default function SettingsPage() {
       id: "password",
       title: "Change Password",
       icon: KeyRound,
-      description: "Manage credentials and access keys",
-    },
-    {
-      id: "email",
-      title: "Change Email",
-      icon: Mail,
-      description: "Update verified email address",
+      description: "Manage account credentials",
     },
     {
       id: "sessions",
       title: "Active Sessions",
       icon: Layers,
       description: "Manage connected devices and logins",
-    },
-    {
-      id: "2fa",
-      title: "Two-Factor Auth",
-      icon: Smartphone,
-      description: "Enhanced authenticator app security",
-      badge: "Security",
+      badge: sessions ? `${sessions.length} Active` : undefined,
     },
   ];
 
@@ -131,7 +168,7 @@ export default function SettingsPage() {
           Account & Security Settings
         </h2>
         <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          Configure your personal credentials, change passwords, manage active sessions, and activate 2FA protection.
+          Configure personal credentials, change passwords, and manage active sessions across devices.
         </p>
       </div>
 
@@ -173,7 +210,7 @@ export default function SettingsPage() {
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                         isActive
                           ? "bg-neutral-700 text-neutral-200 dark:bg-neutral-300 dark:text-neutral-800"
-                          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                       }`}
                     >
                       {item.badge}
@@ -203,46 +240,57 @@ export default function SettingsPage() {
 
                 <CardContent className="p-6 pt-2 space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="fullName" className="text-xs">Full Name</Label>
+                    <Label htmlFor="fullName" className="text-xs font-medium">Full Name</Label>
                     <Input
                       id="fullName"
-                      value={fullName || user?.fullName || ""}
+                      value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Your full name"
+                      disabled={updateProfileMutation.isPending}
                       className="rounded-xl text-xs h-10"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="emailDisabled" className="text-xs">Email Address</Label>
+                    <Label htmlFor="emailDisabled" className="text-xs font-medium">Email Address</Label>
                     <Input
                       id="emailDisabled"
                       value={user?.email || ""}
                       disabled
                       className="rounded-xl text-xs h-10 bg-neutral-100 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed"
                     />
-                    <p className="text-[11px] text-neutral-400">
-                      To change your email address, use the &quot;Change Email&quot; tab.
-                    </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Account Role</Label>
+                    <Label className="text-xs font-medium">Account Role & Privileges</Label>
                     <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-800 text-xs flex items-center justify-between">
                       <span className="font-semibold capitalize text-neutral-800 dark:text-neutral-200">
-                        {user?.role || "standard"} Member
+                        {user?.role || "USER"} Member
                       </span>
                       <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 px-2 py-0.5 rounded-full font-medium">
-                        Standard Privileges
+                        {user?.isEmailVerified ? "Verified Account" : "Unverified"}
                       </span>
                     </div>
                   </div>
                 </CardContent>
 
                 <CardFooter className="p-6 pt-0 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
-                  <Button type="submit" className="rounded-xl text-xs h-9 px-4">
-                    <Save className="w-3.5 h-3.5 mr-2" />
-                    Save Changes
+                  <Button
+                    type="submit"
+                    disabled={updateProfileMutation.isPending}
+                    className="rounded-xl text-xs h-9 px-4 font-semibold"
+                  >
+                    {updateProfileMutation.isPending ? (
+                      <span className="flex items-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5">
+                        <Save className="w-3.5 h-3.5" />
+                        Save Changes
+                      </span>
+                    )}
                   </Button>
                 </CardFooter>
               </form>
@@ -259,13 +307,13 @@ export default function SettingsPage() {
                     Change Password
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Ensure your account is using a strong, unique password to prevent unauthorized access.
+                    Update your account password.
                   </CardDescription>
                 </CardHeader>
 
                 <CardContent className="p-6 pt-2 space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="currentPassword" className="text-xs">Current Password</Label>
+                    <Label htmlFor="currentPassword" className="text-xs font-medium">Current Password</Label>
                     <div className="relative">
                       <Input
                         id="currentPassword"
@@ -275,6 +323,7 @@ export default function SettingsPage() {
                           setPasswords({ ...passwords, currentPassword: e.target.value })
                         }
                         placeholder="••••••••"
+                        disabled={changePasswordMutation.isPending}
                         className="rounded-xl text-xs h-10 pr-10"
                       />
                       <button
@@ -288,7 +337,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="newPassword" className="text-xs">New Password</Label>
+                    <Label htmlFor="newPassword" className="text-xs font-medium">New Password</Label>
                     <Input
                       id="newPassword"
                       type={showPassword ? "text" : "password"}
@@ -296,13 +345,14 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         setPasswords({ ...passwords, newPassword: e.target.value })
                       }
-                      placeholder="Min. 6 characters"
+                      placeholder="Min. 8 characters"
+                      disabled={changePasswordMutation.isPending}
                       className="rounded-xl text-xs h-10"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs">Confirm New Password</Label>
+                    <Label htmlFor="confirmPassword" className="text-xs font-medium">Confirm New Password</Label>
                     <Input
                       id="confirmPassword"
                       type={showPassword ? "text" : "password"}
@@ -311,224 +361,173 @@ export default function SettingsPage() {
                         setPasswords({ ...passwords, confirmPassword: e.target.value })
                       }
                       placeholder="Repeat new password"
+                      disabled={changePasswordMutation.isPending}
                       className="rounded-xl text-xs h-10"
                     />
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-800 space-y-1.5 text-[11px] text-neutral-500 dark:text-neutral-400">
-                    <p className="font-semibold text-neutral-700 dark:text-neutral-300">
-                      Password Requirements:
-                    </p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      <li>Minimum 6 characters in length</li>
-                      <li>Include uppercase & lowercase letters</li>
-                      <li>Include numbers and special symbols</li>
-                    </ul>
                   </div>
                 </CardContent>
 
                 <CardFooter className="p-6 pt-0 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
-                  <Button type="submit" className="rounded-xl text-xs h-9 px-4">
-                    <Lock className="w-3.5 h-3.5 mr-2" />
-                    Update Password
+                  <Button
+                    type="submit"
+                    disabled={changePasswordMutation.isPending}
+                    className="rounded-xl text-xs h-9 px-4 font-semibold"
+                  >
+                    {changePasswordMutation.isPending ? (
+                      <span className="flex items-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Updating...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5" />
+                        Update Password
+                      </span>
+                    )}
                   </Button>
                 </CardFooter>
               </form>
             </Card>
           )}
 
-          {/* TAB 3: CHANGE EMAIL */}
-          {activeTab === "email" && (
-            <Card className="border-neutral-200 dark:border-neutral-800 shadow-xs">
-              <form onSubmit={handleUpdateEmail}>
-                <CardHeader className="p-6 pb-4">
-                  <CardTitle className="text-base font-bold flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-neutral-500" />
-                    Change Email Address
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Update your primary contact and login email address.
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="p-6 pt-2 space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Current Email Address</Label>
-                    <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
-                      <span>{user?.email || "No email"}</span>
-                      {user?.isEmailVerified ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                          <AlertTriangle className="w-3 h-3" />
-                          Unverified
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="newEmail" className="text-xs">New Email Address</Label>
-                    <Input
-                      id="newEmail"
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="new.email@example.com"
-                      className="rounded-xl text-xs h-10"
-                    />
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-900 dark:text-amber-300">
-                    <span className="font-semibold">Important:</span> You will receive a verification link or OTP code at the new email address before the change takes effect.
-                  </div>
-                </CardContent>
-
-                <CardFooter className="p-6 pt-0 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
-                  <Button type="submit" className="rounded-xl text-xs h-9 px-4">
-                    Send Verification Request
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          )}
-
-          {/* TAB 4: SESSIONS */}
+          {/* TAB 3: SESSIONS */}
           {activeTab === "sessions" && (
             <Card className="border-neutral-200 dark:border-neutral-800 shadow-xs">
-              <CardHeader className="p-6 pb-4">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-neutral-500" />
-                  Active Sessions
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Review all active devices, browsers, and locations currently logged into your account.
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="p-6 pt-2 space-y-4">
-                {/* Current Session */}
-                <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                      <Laptop className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100">
-                          Windows PC • Chrome Browser
-                        </span>
-                        <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.2 rounded-full">
-                          Current Device
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Local IP: 127.0.0.1 • Active right now
-                      </p>
-                    </div>
-                  </div>
+              <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-neutral-500" />
+                    Active Sessions
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Connected devices and browsers currently logged into your account in Redis.
+                  </CardDescription>
                 </div>
-
-                {/* Simulated Secondary Session */}
-                <div className="p-4 rounded-2xl bg-neutral-50/50 dark:bg-neutral-800/30 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between opacity-80">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 flex items-center justify-center">
-                      <Globe className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                        Mobile Device • Safari on iOS
-                      </span>
-                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Last active 3 days ago • Token expired
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter className="p-6 pt-0 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
-                <span className="text-[11px] text-neutral-400">
-                  Need to secure your account?
-                </span>
                 <Button
-                  onClick={handleRevokeOtherSessions}
-                  variant="outline"
-                  className="rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 h-9 px-4 cursor-pointer"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refetchSessions()}
+                  className="rounded-lg text-xs h-8 px-2"
                 >
-                  <Trash2 className="w-3.5 h-3.5 mr-2" />
-                  Revoke Other Sessions
+                  <RefreshCw className="w-3.5 h-3.5" />
                 </Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {/* TAB 5: 2FA */}
-          {activeTab === "2fa" && (
-            <Card className="border-neutral-200 dark:border-neutral-800 shadow-xs">
-              <CardHeader className="p-6 pb-4">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-neutral-500" />
-                  Two-Factor Authentication (2FA)
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Add an extra layer of protection by requiring a 6-digit TOTP code upon login.
-                </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-6 pt-2 space-y-5">
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800">
-                  <div>
-                    <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100">
-                      Authenticator App (TOTP)
-                    </h4>
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                      Use apps like Google Authenticator, Authy, or 1Password.
-                    </p>
+              <CardContent className="p-6 pt-2 space-y-3">
+                {isLoadingSessions ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-neutral-400 text-xs">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Loading active sessions...</span>
                   </div>
-                  <Button
-                    onClick={handleToggle2FA}
-                    variant={twoFactorEnabled ? "outline" : "default"}
-                    size="sm"
-                    className="rounded-xl text-xs"
-                  >
-                    {twoFactorEnabled ? "Disable 2FA" : "Enable 2FA"}
-                  </Button>
-                </div>
-
-                {twoFactorEnabled && (
-                  <div className="p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-4 animate-in fade-in">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Two-Factor Protection is Active
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                      <div className="w-24 h-24 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
-                        <QrCode className="w-16 h-16" />
-                      </div>
-                      <div className="space-y-1 text-center sm:text-left">
-                        <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                          Backup Secret Key
-                        </p>
-                        <p className="text-xs font-mono bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-md text-neutral-700 dark:text-neutral-300 select-all">
-                          AUTH-4982-FORGE-7721
-                        </p>
-                        <p className="text-[10px] text-neutral-400">
-                          Keep this secret code stored safely for account recovery.
-                        </p>
-                      </div>
-                    </div>
+                ) : !sessions || sessions.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-neutral-500">
+                    No active sessions found.
                   </div>
+                ) : (
+                  sessions.map((session) => {
+                    const DeviceIcon = getDeviceIcon(session.userAgent);
+                    return (
+                      <div
+                        key={session.sessionId}
+                        className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          session.isCurrent
+                            ? "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700"
+                            : "bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800 opacity-90"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                              session.isCurrent
+                                ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+                            }`}
+                          >
+                            <DeviceIcon className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate">
+                                {formatUserAgent(session.userAgent)}
+                              </span>
+                              {session.isCurrent && (
+                                <span className="text-[9px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                  Current Device
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                              IP: {session.ipAddress || "Unknown"} • Last active:{" "}
+                              {session.lastActivityAt
+                                ? new Date(session.lastActivityAt).toLocaleString()
+                                : "Recently"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {!session.isCurrent && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setRevokingSessionId(session.sessionId)}
+                            disabled={deleteSessionMutation.isPending}
+                            className="rounded-lg text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 h-8 px-2.5 shrink-0"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            Revoke
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </CardContent>
+
+              {sessions && sessions.length > 1 && (
+                <CardFooter className="p-6 pt-0 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+                  <span className="text-[11px] text-neutral-400">
+                    Multiple devices detected
+                  </span>
+                  <Button
+                    onClick={() => setShowRevokeAllDialog(true)}
+                    variant="outline"
+                    className="rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 h-9 px-4 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    Revoke All Other Sessions
+                  </Button>
+                </CardFooter>
+              )}
             </Card>
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog for Revoking a Single Session */}
+      <ConfirmationDialog
+        isOpen={revokingSessionId !== null}
+        onClose={() => setRevokingSessionId(null)}
+        onConfirm={() => {
+          if (revokingSessionId) handleRevokeSession(revokingSessionId);
+        }}
+        title="Revoke Active Session"
+        description="Are you sure you want to disconnect this device? The user will be required to log in again."
+        confirmText="Revoke Session"
+        variant="danger"
+        isLoading={deleteSessionMutation.isPending}
+      />
+
+      {/* Confirmation Dialog for Revoking All Other Sessions */}
+      <ConfirmationDialog
+        isOpen={showRevokeAllDialog}
+        onClose={() => setShowRevokeAllDialog(false)}
+        onConfirm={() => handleRevokeAllOtherSessions()}
+        title="Revoke All Other Sessions"
+        description="This will instantly log out every other device and browser connected to your account. Your current session will remain active."
+        confirmText="Revoke All Others"
+        variant="danger"
+        isLoading={logoutAllMutation.isPending}
+      />
     </div>
   );
 }

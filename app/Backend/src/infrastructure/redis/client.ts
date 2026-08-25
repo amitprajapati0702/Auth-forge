@@ -40,3 +40,14 @@ export async function disconnectRedis(): Promise<void> {
     await redis.quit();
   }
 }
+
+/**
+ * Resilient sendCommand helper for express-rate-limit RedisStore
+ * Automatically ensures Redis is connected before sending commands.
+ */
+export async function sendRedisCommand(...args: string[]): Promise<unknown> {
+  if (!redis.isOpen) {
+    await connectRedis();
+  }
+  return (redis as any).sendCommand(args);
+}

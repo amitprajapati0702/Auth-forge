@@ -64,3 +64,13 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
 
   return data.data;
 }
+
+export async function changePassword(data: { currentPassword: string; newPassword: string }): Promise<void> {
+  await api.post("/users/change-password", data);
+}
+
+export async function updateProfile(data: { fullName?: string; email?: string }): Promise<User> {
+  const { data: res } = await api.patch<{ success: boolean; data: User }>("/users/profile", data);
+  return res.data;
+}
+

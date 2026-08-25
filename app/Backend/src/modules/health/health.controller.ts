@@ -13,7 +13,7 @@ export const getHealth: Handler = asyncHandler(
 
     return res.status(httpStatus.OK).json(
       new ApiResponse({
-        message: 'Service is healthy.',
+        message: "Service is healthy.",
         data: health,
       }),
     );

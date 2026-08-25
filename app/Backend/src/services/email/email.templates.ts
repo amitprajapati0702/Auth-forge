@@ -35,3 +35,18 @@ export function buildPasswordResetEmail(resetUrl: string): string {
     </div>
     `;
 }
+
+export function buildWelcomeEmail(email: string): string {
+    return `
+    <div style="font-family:'Inter',Arial, sans-serif;max-width:600px;margin:0 auto;padding:40px 20px;background-color:#0a0a0a">
+    <h2 style="color:#e5e7eb;text-align:center">Welcome to Auth-Forge 🎉</h2>
+    <p style="font-size:16px;line-height:1.5;color:#9ca3af;margin:20px 0">
+    Your account (<strong style="color:#e5e7eb">${email}</strong>) is verified and ready to use.</p>
+    <p style="font-size:16px;line-height:1.5;color:#9ca3af;margin:20px 0">
+    Thanks,<br>Auth-forge Team</p>
+    <div style="text-align:center;margin-top:30px;border-top:1px solid #374151;padding-top:20px">
+    <p style="font-size:12px;color:#6b7280;">This email was sent automatically. Please do not reply.</p>
+    </div>
+    </div>
+    `;
+}
