@@ -19,7 +19,11 @@ class PasswordResetService {
         const user = await authRepository.findByEmail(email);
 
         if (!user) {
-            return;
+            throw new ApiError({
+                statuscode: httpStatus.NOT_FOUND,
+                message: "User not found.",
+                errorcode: ErrorCodes.USER_NOT_FOUND
+            });
         }
 
         const token = randomBytes(32).toString("hex");

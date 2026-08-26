@@ -21,7 +21,7 @@ export const AUTH_CONSTANTS = {
     MAX_ATTEMPTS: 5,
   },
   SESSION: {
-    EXPIRES_IN_SECONDS: 7 * 24 * 60 * 60,
+    EXPIRES_IN_SECONDS: 7 * 24 * 60 * 60, 
   },
 
   ACCESS_TOKEN_EXPIRES_IN: "15m",

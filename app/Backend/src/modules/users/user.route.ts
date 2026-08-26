@@ -3,6 +3,7 @@ import { authenticate } from "../../middlewares/auth.middleware.js";
 import { AdminGuard } from "../../middlewares/role-guards.js";
 
 import { validate } from "../../middlewares/validate.middleware.js";
+import { passwordChangeRateLimit } from "../../middlewares/rate-limit.middleware.js";
 import { 
     updateProfile, 
     changePassword, 
@@ -24,7 +25,13 @@ const router: Router = Router();
 
 // User self-service routes
 router.patch("/profile", authenticate, validate(updateProfileSchema), updateProfile);
-router.post("/change-password", authenticate, validate(changePasswordSchema), changePassword);
+router.post(
+    "/change-password",
+    authenticate,
+    passwordChangeRateLimit,
+    validate(changePasswordSchema),
+    changePassword
+);
 
 // Admin-only user management routes
 router.get("/", authenticate, AdminGuard, getUsers);

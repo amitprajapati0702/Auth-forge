@@ -18,10 +18,10 @@ export function createQueue<T>(name: string): Queue<T> {
     return new Queue<T>(name, {
         connection: redisConnection,
         defaultJobOptions: {
-            attempts: 3,                       // retry 3 times on failure
+            attempts: 3,
             backoff: { type: "exponential", delay: 5000 }, // 5s → 25s → 125s
-            removeOnComplete: { count: 100 },  // keep last 100 completed jobs
-            removeOnFail: { count: 500 },      // keep last 500 failed jobs
+            removeOnComplete: { count: 50 },  // keep last 50 completed jobs
+            removeOnFail: { count: 100 },      // keep last 100 failed jobs
         },
     });
 }

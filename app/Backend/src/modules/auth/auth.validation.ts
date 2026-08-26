@@ -35,10 +35,7 @@ export const verifyOtpSchema = z.object({
 
     otp: z
         .string()
-        .length(
-            AUTH_CONSTANTS.OTP.LENGTH,
-            "OTP must be exactly 6 digits.",
-        )
+        .length(AUTH_CONSTANTS.OTP.LENGTH, "OTP must be exactly 6 digits.")
         .regex(/^\d+$/, "OTP must contain only digits."),
 });
 

@@ -24,23 +24,27 @@ import {
 
 import { validate } from "../../middlewares/validate.middleware.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
-import { authRateLimit } from "../../middlewares/auth.rate.limit.middleware.js";
-import { registerRateLimit } from "../../middlewares/register-rate-limit.middleware.js";
+import {
+    registerRateLimit,
+    loginRateLimit,
+    otpRateLimit,
+    tokenRefreshRateLimit,
+} from "../../middlewares/rate-limit.middleware.js";
 
 const router: Router = Router();
 
 // Core Auth Routes
 router.post("/register", registerRateLimit, validate(registerSchema), register);
-router.post("/verify-email", validate(VerifyEmailSchema), verifyEmail);
-router.post("/resend-otp", validate(resendOtpSchema), resendOtp);
-router.post("/login", authRateLimit, validate(loginSchema), login);
-router.post("/refresh", refresh);
+router.post("/verify-email", otpRateLimit, validate(VerifyEmailSchema), verifyEmail);
+router.post("/resend-otp", otpRateLimit, validate(resendOtpSchema), resendOtp);
+router.post("/login", loginRateLimit, validate(loginSchema), login);
+router.post("/refresh", tokenRefreshRateLimit, refresh);
 router.post("/logout", authenticate, logout);
 router.post("/logout-all", authenticate, logoutAll);
 router.get("/me", authenticate, getCurrentUser);
 
 // Password Routes
-router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
-router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
+router.post("/forgot-password", otpRateLimit, validate(forgotPasswordSchema), forgotPassword);
+router.post("/reset-password", otpRateLimit, validate(resetPasswordSchema), resetPassword);
 
 export default router;

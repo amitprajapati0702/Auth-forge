@@ -11,7 +11,6 @@ class LoginSecurityService {
     const attempts = await redis.incr(key);
 
     if (attempts === 1) {
-      // expire() takes seconds as TTL — expireAt() takes a Unix timestamp (was wrong)
       await redis.expire(key, AUTH_CONSTANTS.LOGIN_SECURITY.LOCK_DURATION_SECONDS);
     }
 

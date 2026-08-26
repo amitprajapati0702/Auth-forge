@@ -9,9 +9,7 @@ import tokenService from "../services/token/token.service.js";
 
 export const authenticate: RequestHandler = asyncHandler(
     async (req: Request, _res: Response, next: NextFunction) => {
-        const token =
-            req.cookies?.[AUTH_CONSTANTS.COOKIES.ACCESS_TOKEN] ||
-            req.headers.authorization?.replace(/^Bearer\s+/i, "");
+        const token = req.cookies?.[AUTH_CONSTANTS.COOKIES.ACCESS_TOKEN];
 
         if (!token) {
             throw new ApiError({
