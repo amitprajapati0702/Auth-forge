@@ -1,10 +1,3 @@
-// Extend Axios config to support the _retry flag used in the refresh interceptor
-declare module "axios" {
-  interface InternalAxiosRequestConfig {
-    _retry?: boolean;
-  }
-}
-
 import { api } from "./client";
 import type {
   LoginInput,

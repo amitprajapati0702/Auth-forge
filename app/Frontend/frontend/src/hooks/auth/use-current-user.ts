@@ -8,6 +8,6 @@ export function useCurrentUser() {
         queryKey: ["current-user"],
         queryFn: getCurrentUser,
         retry: false,
-        staleTime: Infinity, // Session state is managed server-side; refetch only on explicit invalidation
+        staleTime: 60000,
     });
 }

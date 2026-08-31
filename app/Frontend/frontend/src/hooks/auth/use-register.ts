@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export function useRegister() {
   return useMutation({
     mutationFn: registeruser,
-    onError: (error: unknown) => {
+    onError: (error:unknown) => {
       const message = axios.isAxiosError(error)
         ? (error.response?.data?.message ?? "Registration failed")
         : "Registration failed";
