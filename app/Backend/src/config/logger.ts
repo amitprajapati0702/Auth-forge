@@ -31,7 +31,6 @@ export const logger = pino({
 
     transport: isDevelopment
         ? {
-            // Development: human-readable, colorized output via pino-pretty
             target: 'pino-pretty',
             options: {
                 colorize: true,
@@ -39,7 +38,7 @@ export const logger = pino({
                 ignore: 'pid,hostname',
             },
         }
-        : undefined, // Production: raw NDJSON to stdout (parsed by log aggregators)
+        : undefined, 
 });
 
 
